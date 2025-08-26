@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constitution Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff; /* White background */
+            color: #000000; /* Black text */
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff; /* White background */
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 2px solid #000000; /* Black border */
+        }
+
+        .header {
+            background: #000000;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .status {
+            background: #ffffff; /* White background */
+            padding: 10px 20px;
+            border-bottom: 1px solid #000000; /* Black border */
+            font-size: 0.9rem;
+            color: #000000; /* Black text */
+        }
+
+        .status.online {
+            color: #000000; /* Black text */
+            font-weight: bold;
+        }
+
+        .status.offline {
+            color: #000000; /* Black text */
+        }
+
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #ffffff; /* White background */
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: #000000;
+            color: #ffffff;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background: #ffffff;
+            color: #000000;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            border: 1px solid #cccccc;
+        }
+
+        .message-source {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            color: #000000; /* Black text */
+        }
+
+        .articles {
+            background: #ffffff; /* White background */
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #000000; /* Black text */
+            border: 1px solid #000000; /* Black border */
+        }
+
+        .input-container {
+            padding: 20px;
+            background: #ffffff; /* White background */
+            border-top: 1px solid #cccccc;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #cccccc;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+            background: #ffffff;
+            color: #000000;
+        }
+
+        input[type="text"]:focus {
+            border-color: #000000;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #333333;
+        }
+
+        button:disabled {
+            background: #666666;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #000000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #000000; /* Black text */
+            padding: 10px;
+            background: #ffffff; /* White background */
+            border: 1px solid #000000; /* Black border */
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1> Constitution Chatbot</h1>
+            <p>Ask questions about the Indian Constitution</p>
+        </div>
+        
+        <!-- <div class="status" id="status">
+            Checking server status...
+        </div> -->
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot-message">
+                Welcome! I can help answer questions about the Indian Constitution. 
+                What would you like to know?
+                <div class="message-source">System</div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="questionInput" 
+                    placeholder="Ask a question about the constitution..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button id="askButton" onclick="askQuestion()">Ask</button>
+            </div>
+            <div id="errorContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let conversationId = null;
+
+        // Check server status on load
+        checkServerStatus();
+
+        function checkServerStatus() {
+            fetch(`${API_BASE}/health`)
+                .then(response => response.json())
+                .then(data => {
+                    const statusElement = document.getElementById('status');
+                    statusElement.textContent = `Server: ${data.status.toUpperCase()} | RAG: ${data.rag_available ? 'AVAILABLE' : 'FALLBACK MODE'}`;
+                    statusElement.className = `status ${data.status === 'healthy' ? 'online' : 'offline'}`;
+                })
+                .catch(error => {
+                    document.getElementById('status').textContent = 'Server: OFFLINE';
+                    document.getElementById('status').className = 'status offline';
+                });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                askQuestion();
+            }
+        }
+
+        function askQuestion() {
+            const input = document.getElementById('questionInput');
+            const button = document.getElementById('askButton');
+            const question = input.value.trim();
+            
+            if (!question) return;
+
+            // Add user message to chat
+            addMessage(question, 'user');
+            input.value = '';
+            button.disabled = true;
+            button.innerHTML = '<div class="loading"></div>';
+
+            // Clear any previous errors
+            document.getElementById('errorContainer').innerHTML = '';
+
+            // Prepare request body
+            const requestBody = {
+                question: question,
+                conversation_id: conversationId
+            };
+
+            // Send request to API
+            fetch(`${API_BASE}/ask`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Add bot response to chat
+                let messageHtml = data.answer;
+                
+                if (data.supporting_articles && data.supporting_articles.length > 0) {
+                    messageHtml += `<div class="articles">📌 Supporting Articles: ${data.supporting_articles.join(', ')}</div>`;
+                }
+                
+                // Remove source information from the response
+                if (data.semantic_similarity !== null) {
+                    messageHtml += `<div class="message-source">Similarity: ${data.semantic_similarity?.toFixed(3) || 'N/A'}</div>`;
+                }
+
+                addMessage(messageHtml, 'bot');
+                
+                // Update conversation ID if provided
+                if (data.conversation_id) {
+                    conversationId = data.conversation_id;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('errorContainer').innerHTML = `
+                    <div class="error">
+                        Error: ${error.message}. Please make sure the server is running.
+                    </div>
+                `;
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = 'Ask';
+            });
+        }
+
+        function addMessage(content, type) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.innerHTML = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Auto-focus input on load
+        document.getElementById('questionInput').focus();
+    </script>
+</body>
+</html>

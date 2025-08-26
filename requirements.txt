@@ -8,7 +8,7 @@ faiss-cpu==1.7.4
 google-generativeai==0.3.2
 langchain-google-genai==0.0.4
 langchain-community==0.0.19
-scikit-learn==1.3.2
+scikit-learn==1.3.0  # Downgraded to avoid compilation issues
 numpy==1.24.3
 pydantic==2.5.0
 python-dotenv==1.0.0

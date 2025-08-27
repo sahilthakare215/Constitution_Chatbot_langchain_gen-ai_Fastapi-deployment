@@ -70,13 +70,12 @@ class RAGService:
                 search_kwargs={'k': 5, 'fetch_k': 10}
             )
             
-            # Create QA chain
+            # Create QA chain without memory (we'll handle memory separately)
             self.qa_chain = RetrievalQA.from_chain_type(
                 llm=self.llm,
                 chain_type="stuff",
                 retriever=self.retriever,
-                return_source_documents=True,
-                memory=self.memory
+                return_source_documents=True
             )
             
             self._initialized = True

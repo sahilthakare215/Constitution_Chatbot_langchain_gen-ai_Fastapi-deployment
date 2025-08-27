@@ -147,11 +147,12 @@ async def general_exception_handler(request, exc):
         details={"exception": str(exc)}
     )
 
-if __name__ == "__main__":
-    """Run the application"""
-    uvicorn.run(
-        "main:app",
-        host=config.HOST,
-        port=config.PORT,
-        reload=config.DEBUG
-    )
+# This block is commented out to prevent double execution when running via uvicorn command
+# if __name__ == "__main__":
+#     """Run the application"""
+#     uvicorn.run(
+#         "main:app",
+#         host=config.HOST,
+#         port=config.PORT,
+#         reload=config.DEBUG
+#     )

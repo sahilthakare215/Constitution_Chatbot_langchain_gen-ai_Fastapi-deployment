@@ -1,5 +1,7 @@
 NOTE:  the link is slow because its a free version of render so it will take 1-2 minutes to load but later your experience with the UI will be smooth.i could have used vercel or netlify but both show so much of errors while working with fastapi so i chose render and also streamlit deployment is present in another repo.
 
+https://constitutio-whgc0z.streamlit.app/
+
 
 # Constitution Chatbot API
 
